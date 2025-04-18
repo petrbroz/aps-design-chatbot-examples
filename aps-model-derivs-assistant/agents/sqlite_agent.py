@@ -5,7 +5,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
-from langchain_openai import ChatOpenAI
+from langchain_aws import ChatBedrock
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
@@ -37,7 +37,13 @@ class Agent:
         return responses
 
 async def create_sqlite_agent(db: SQLDatabase, cache_urn_dir: str):
-    llm = ChatOpenAI(model="gpt-4o")
+    llm = ChatBedrock(
+        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_kwargs={
+            "temperature": 0.0,
+            "max_tokens": 4096
+        }
+    )
     sql_toolkit = SQLDatabaseToolkit(db=db, llm=llm)
     prompt_template = ChatPromptTemplate.from_messages([("system", SYSTEM_PROMPTS), ("placeholder", "{messages}")])
     return Agent(llm, prompt_template, sql_toolkit.get_tools(), cache_urn_dir)

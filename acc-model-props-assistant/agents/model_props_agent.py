@@ -6,7 +6,7 @@ from datetime import datetime
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool, BaseTool
-from langchain_openai import ChatOpenAI
+from langchain_aws import ChatBedrock
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from typing import Annotated
@@ -127,7 +127,13 @@ async def create_model_props_agent(project_id: str, version_id: str, access_toke
         """Processes the given JSON input with the given jq query, and returns the result as a JSON."""
         return jq.compile(jq_query).input_text(input_json).all()
 
-    llm = ChatOpenAI(model="gpt-4o")
+    llm = ChatBedrock(
+        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_kwargs={
+            "temperature": 0.0,
+            "max_tokens": 4096
+        }
+    )
     tools = [create_index, list_index_properties, query_index, execute_jq_query]
     system_prompts = [
         SYSTEM_PROMPTS,

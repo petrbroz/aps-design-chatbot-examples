@@ -10,7 +10,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool, BaseTool
 from langchain_core.vectorstores import VectorStore
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_aws import ChatBedrock, BedrockEmbeddings
 from langchain.tools.retriever import create_retriever_tool
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -22,7 +22,7 @@ with open(os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPTS.md")) as f:
 with open(os.path.join(os.path.dirname(__file__), "AECDM.graphql")) as f:
     AECDM_GRAPHQL = f.read().replace("{", "{{").replace("}", "}}")
 
-_embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+_embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1")
 INDEX_DIMENSIONS = 1536
 AECDM_ENDPOINT = "https://developer.api.autodesk.com/aec/graphql"
 MAX_RESPONSE_SIZE = (1 << 12)
@@ -130,7 +130,13 @@ async def create_aecdm_agent(element_group_id: str, access_token: str, cache_dir
     retriever = vector_store.as_retriever(search_type="mmr", search_kwargs={"k": 8})
     retriever_tool = create_retriever_tool(retriever, "find_related_property_definitions", "Finds property definitions in the AEC Data Model API that are relevant to the input query.")
 
-    llm = ChatOpenAI(model="gpt-4o")
+    llm = ChatBedrock(
+        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_kwargs={
+            "temperature": 0.0,
+            "max_tokens": 4096
+        }
+    )
     tools = [execute_graphql_query, execute_jq_query, retriever_tool]
     system_prompts = [
         SYSTEM_PROMPTS,
