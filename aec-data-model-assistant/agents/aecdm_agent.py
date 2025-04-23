@@ -93,6 +93,7 @@ async def _get_vector_store(element_group_id: str, access_token: str, cache_dir:
     index_cache_path = os.path.join(cache_dir, "faiss_index")
     if os.path.exists(index_cache_path):
         return FAISS.load_local(index_cache_path, _embeddings, allow_dangerous_deserialization=True)
+    print(f"Creating FAISS index at {index_cache_path}")
     index = faiss.IndexFlatL2(INDEX_DIMENSIONS)
     vector_store = FAISS(
         embedding_function=_embeddings,
@@ -100,12 +101,15 @@ async def _get_vector_store(element_group_id: str, access_token: str, cache_dir:
         docstore=InMemoryDocstore(),
         index_to_docstore_id={},
     )
+    print(f"Loading property definitions for element group {element_group_id}")
     property_definitions = await _get_property_definitions(element_group_id, access_token, cache_dir)
     documents = [
         Document(f"Property Name: {prop['name']}\nID: {prop['id']}\nDescription: {prop['description']}\nUnits: {prop['units']['name'] if prop['units'] and prop['units']['name'] else ''}")
         for prop in property_definitions
     ]
+    print(f"Adding {len(documents)} documents to the index")
     vector_store.add_documents(documents=documents)
+    print(f"Saving FAISS index to {index_cache_path}")
     vector_store.save_local(index_cache_path)
     return vector_store
 
