@@ -29,8 +29,8 @@ Login with your Autodesk credentials, select one of your design files in ACC, an
 ### Prerequisites
 
 - [APS application](https://aps.autodesk.com/en/docs/oauth/v2/tutorials/create-app/) of the _Desktop, Mobile, Single-Page App_ type
-- [OpenAI API key](https://platform.openai.com/docs/quickstart/create-and-export-an-api-key)
-- [Python 3.x](https://www.python.org/downloads/)
+- [Amazon Bedrock](https://aws.amazon.com/bedrock/) access with Claude 3.5 Sonnet model enabled
+- [Python 3.11](https://www.python.org/downloads/)
 
 ### Setup
 
@@ -38,7 +38,8 @@ Login with your Autodesk credentials, select one of your design files in ACC, an
 - Initialize and activate a virtual environment: `python3 -m venv .venv && source .venv/bin/activate`
 - Install Python dependencies: `pip install -r requirements.txt`
 - Update [static/config.js](static/config.js) with your APS client ID and callback URL
-- Set the following environment variables:
-  - `OPENAI_API_KEY` - your OpenAI API key
+- Configure AWS credentials:
+  - Set up AWS credentials in your environment or AWS credentials file
+  - Ensure you have access to the Claude 3.5 Sonnet model in your AWS Bedrock account
 - Run the dev server: `python server.py`
 - Open http://localhost:8000 in the browser

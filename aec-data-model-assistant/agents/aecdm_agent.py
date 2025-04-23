@@ -102,7 +102,7 @@ async def _get_vector_store(element_group_id: str, access_token: str, cache_dir:
     )
     property_definitions = await _get_property_definitions(element_group_id, access_token, cache_dir)
     documents = [
-        Document(f"Property Name: {prop["name"]}\nID: {prop["id"]}\nDescription: {prop["description"]}\nUnits: {prop["units"]["name"] if prop["units"] and prop["units"]["name"] else ""}")
+        Document(f"Property Name: {prop['name']}\nID: {prop['id']}\nDescription: {prop['description']}\nUnits: {prop['units']['name'] if prop['units'] and prop['units']['name'] else ''}")
         for prop in property_definitions
     ]
     vector_store.add_documents(documents=documents)
@@ -131,7 +131,7 @@ async def create_aecdm_agent(element_group_id: str, access_token: str, cache_dir
     retriever_tool = create_retriever_tool(retriever, "find_related_property_definitions", "Finds property definitions in the AEC Data Model API that are relevant to the input query.")
 
     llm = ChatBedrock(
-        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         model_kwargs={
             "temperature": 0.0,
             "max_tokens": 4096

@@ -38,7 +38,7 @@ class Agent:
 
 async def create_sqlite_agent(db: SQLDatabase, cache_urn_dir: str):
     llm = ChatBedrock(
-        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         model_kwargs={
             "temperature": 0.0,
             "max_tokens": 4096

@@ -58,7 +58,7 @@ async def _create_index(project_id: str, design_id: str, access_token: str, cach
     with open(index_path) as f:
         index = json.load(f)
         if "errors" in index:
-            raise Exception(f"Index creation failed with errors: {index["errors"]}")
+            raise Exception(f"Index creation failed with errors: {index['errors']}")
         return index["indexId"]
 
 async def _list_index_properties(project_id: str, index_id: str, access_token: str, cache_dir: str):
@@ -94,7 +94,7 @@ async def _query_index(project_id: str, index_id: str, query_str: str, access_to
         else:
             return results
     else:
-        raise Exception(f"Query failed with errors: {query["errors"]}")
+        raise Exception(f"Query failed with errors: {query['errors']}")
 
 async def create_model_props_agent(project_id: str, version_id: str, access_token: str, cache_dir: str):
     @tool
@@ -128,7 +128,7 @@ async def create_model_props_agent(project_id: str, version_id: str, access_toke
         return jq.compile(jq_query).input_text(input_json).all()
 
     llm = ChatBedrock(
-        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         model_kwargs={
             "temperature": 0.0,
             "max_tokens": 4096
