@@ -31,7 +31,7 @@ Login with your Autodesk credentials, select one of your design files in ACC, an
 
 - [APS application](https://aps.autodesk.com/en/docs/oauth/v2/tutorials/create-app/) of the _Desktop, Mobile, Single-Page App_ type
 - [Amazon Bedrock](https://aws.amazon.com/bedrock/) access with Claude 3.5 Sonnet model enabled
-- [Python 3.11](https://www.python.org/downloads/)
+- [Python 3.x](https://www.python.org/downloads/) (tested with version 3.13)
 
 ### Setup
 
