@@ -18,7 +18,7 @@ dataclasses-json==0.6.7
 distro==1.9.0
 dnspython==2.7.0
 email_validator==2.2.0
-faiss-cpu==1.7.4
+faiss-cpu==1.10.0
 fastapi==0.115.8
 fastapi-cli==0.0.7
 frozenlist==1.5.0
@@ -54,7 +54,7 @@ mdurl==0.1.2
 msgpack==1.1.0
 multidict==6.1.0
 mypy_extensions==1.1.0
-numpy==1.26.4
+numpy==2.2.5
 orjson==3.10.15
 ormsgpack==1.9.1
 packaging==24.2
