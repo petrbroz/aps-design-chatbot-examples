@@ -50,7 +50,7 @@ mdurl==0.1.2
 msgpack==1.1.0
 multidict==6.1.0
 mypy-extensions==1.0.0
-numpy==1.26.4
+numpy==2.2.5
 openai==1.63.2
 orjson==3.10.15
 ormsgpack==1.9.1
