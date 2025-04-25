@@ -8,47 +8,81 @@ The AEC Data Model API provides a structured way to interact with AEC (Architect
 
 Using the AEC Data Model API, you can:
 
-- Retrieve hubs, projects, folders, elementGroups, and elements based on specific criteria.
+- Retrieve hubs, projects, folders, element groups, and elements based on specific criteria.
 - Apply filters using RSQL or standard query parameters.
 - Fetch element data, including properties and metadata.
-- Query distinct property values for elementGroups.
+- Query distinct property values for element groups.
 
 ## API Constructs
 
 The API is based on the following key constructs:
 
-- **ElementGroup**: A collection of elements within an AEC project, sometimes referred to as "Model" or "Design."
-- **Elements**: Individual building blocks within an elementGroup, such as walls, windows, or doors.
+- **Element Group**: A collection of elements within an AEC project, sometimes referred to as "Model" or "Design."
+- **Elements**: Individual building blocks within an element group, such as walls, windows, or doors.
 - **Reference Property**: Defines relationships between elements.
 - **Property**: Granular data describing an element, such as area, volume, or length.
 - **Property Definition**: Metadata describing properties, including units and types.
 
-## Standard Filtering
+## Basic Filtering
 
-The API provides standard filtering options for querying elements and elementGroups based on their properties.
+The API provides standard filtering options for querying elements and element groups based on their properties.
 
 The queries **must only use** property IDs or names from the property definitions available for the given element group.
 
-### ElementGroup Filtering Options
+### ElementGroup Basic Filtering
+
+#### Filters
 
 | Field | Type | Example Query | Expected Response |
 |-------|------|---------------|-------------------|
-| `name` | String | `{ "name": "Project A" }` | Returns elementGroups with name "Project A" |
-| `fileUrn` | String | `{ “fileUrn”: “urn:adsk.wipstg:dm.lineage:u-ncDS7gX3ZhpB3rgZXKeQ” }` | Returns elementGroups with a specified URN |
-| `createdBy` | String | `{ "createdBy": "user@company.com" }` | Returns elementGroups created by the specified user |
-| `lastModifiedBy` | String | `{ "lastModifiedBy": "user@company.com" }` | Returns elementGroups last modified by the specified user |
+| `name` | String | `{ "name": "Project A" }` | Returns element groups with name "Project A" |
+| `fileUrn` | String | `{ “fileUrn”: “urn:adsk.wipstg:dm.lineage:u-ncDS7gX3ZhpB3rgZXKeQ” }` | Returns element groups with a specified URN |
+| `createdBy` | String | `{ "createdBy": "user@company.com" }` | Returns element groups created by the specified user |
+| `lastModifiedBy` | String | `{ "lastModifiedBy": "user@company.com" }` | Returns element groups last modified by the specified user |
 
 #### Examples
 
-Return elementGroups with name “Tower Blueprints.rvt” and created by the user with email “first.last@autodesk.com”:
+Return element groups named `House.rvt`, created by user `john.doe@company.com`:
 
-`“name”: “Tower Blueprints.rvt”, “createdBy”: “first.last@autodesk.com”`
+```
+query {
+  elementGroupsByProject(
+    projectId: "..."
+    filter: {name: "House.rvt", createdBy: "john.doe@company.com"}
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+    }
+  }
+}
+```
 
-Return elementGroups created by the user with email “first.last@autodesk.com”” or with email “test@autodesk.com”:
+Return element groups created by user `john.doe@company.com` or `jane@gmail.com`:
 
-`“createdBy”: [”first.last@autodesk.com”, “test@autodesk.com”]`
+```
+query {
+  elementGroupsByProject(
+    projectId: "..."
+    filter: {createdBy: ["john.doe@company.com", "jane@gmail.com"]}
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+    }
+  }
+}
+```
 
-### Element Filtering Options
+### Element Basic Filtering
+
+#### Filters
 
 | Field | Type | Example Query | Expected Response |
 |-------|------|---------------|-------------------|
@@ -63,47 +97,98 @@ Return elementGroups created by the user with email “first.last@autodesk.com�
 
 #### Examples
 
-Return elements with name “HVAC Feed”, part of the “Linear - 3/32" Trebuchet MS” family, and are types:
+Query elements named `HVAC`, and retrieve their *area* properties:
 
-`“name”: “HVAC Feed”, “properties”: [{ “name”: “Family Name”, “value”: “Linear - 3/32" Trebuchet MS” }, { “id”: “autodesk.revit.parameter:parameter.elementContext-1.0.0”, “value”: “Type”}]`
-
-Return elements created by the user with email “test@autodesk.com”” or with email “test@autodesk.com”, and last modified by the user with email “first.last@autodesk.com”:
-
-`“createdBy”: [”john.doer@autodesk.com”, “test@autodesk.com”], “lastModifiedBy”: “john.doer@autodesk.com”`
+```
+query {
+  elementsByElementGroup(
+    elementGroupId: "..."
+    filter: {name: "HVAC"}
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+      properties(filter: {names: ["Area"]}) {
+        results {
+          name
+          value
+          definition {
+            units {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 Query all elements that have the following criteria:
 
-- Named 2.5" x 5" rectangular (Orange)
-- Are instances. This example uses the property id (autodesk.revit.parameter:parameter.elementContext-1.0.0), but the property name can be supplied instead
-- Are part of the Rectangular Mullion family. The example uses the property name (Family Name), but the property id can be supplied instead
-- Have a “Type” reference with the element with id YWVjZX5JR0JWdWROM2QxdW1kTkJZRnR2ZlpBX0wyQ351LW5jRFM3Z1E2R2hwQjNyZ1pYS2VRX2UzPLIz
-- Were created by user first.last@autodesk.com
+- Named `2.5" x 5" rectangular (Orange)`
+- Are instances. This example uses the property id `autodesk.revit.parameter:parameter.elementContext-1.0.0`, but the property name can be supplied instead
+- Are part of the `Rectangular Mullion` family. The example uses the property name `Family Name`, but the property ID can be supplied instead
+- Have a `Type` reference with the element with id `YWVjZX5JR0JWdWROM2QxdW1kTkJZRnR2ZlpBX0wyQ351LW5jRFM3Z1E2R2hwQjNyZ1pYS2VRX2UzPLIz`
+- Were created by user `john.doe@company.com`
 
-```json
-{
-    ...,
-    "filter": {
-        "name": "2.5\" x 5\" rectangular (Orange)"
-        "properties": [
-            { "name": "Family Name", "value": "Rectangular Mullion" }
-            { "id": "autodesk.revit.parameter:parameter.elementContext-1.0.0", "value": "Instance" }
-        ]
-        "references": { "name": "Type", "referencedId": "YWVjZX5JR0JWdWROM2QxdW1kTkJZRnR2ZlpBX0wyQ351LW5jRFM3Z1E2R2hwQjNyZ1pYS2VRX2UzPLIz" }
-        "createdBy": "first.last@autodesk.com"
-    },
-    ...
+```
+query {
+  elementsByElementGroup(
+    elementGroupId: "...",
+    filter: {
+      name: "2.5\" x 5\" rectangular (Orange)",
+      properties: [
+        {
+          name: "Family Name",
+          value: "Rectangular Mullion"
+        },
+        {
+          id: "autodesk.revit.parameter:parameter.elementContext-1.0.0",
+          value: "Instance"
+        }
+      ],
+      references: {
+        name: "Type",
+        referenceId: "YWVjZX5JR0JWdWROM2QxdW1kTkJZRnR2ZlpBX0wyQ351LW5jRFM3Z1E2R2hwQjNyZ1pYS2VRX2UzPLIz"
+    	},
+      createdBy: "john.doe@company.com"
+    }
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+      properties {
+        results {
+          name
+          value
+          definition {
+            units {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
 }
 ```
 
 ## Advanced Filtering Using RSQL
 
-The API also supports complex filtering expressions using RSQL, which provides:
+Elements can also be filtered using RSQL which provides:
 
 - Case-sensitive and case-insensitive comparisons.
 - Operators such as `==`, `!=`, `>`, `<`, `>=`, `<=`.
-- Compound operations using `AND` and `OR`.
+- Compound operations using `and` and `or`.
 
-### Example RSQL Queries
+### RSQL Queries
 
 | Filter type | Query | Expectation |
 |-------------|-------|-------------|
@@ -119,27 +204,73 @@ The API also supports complex filtering expressions using RSQL, which provides:
 | Wild card (starts with) | `“property.name.room=startsWith=boiler”` | Returns elements that have property name “room” beginning with value “boiler” (case-sensitive). |
 | By metadata, where Date/Time is greater than,less than or range | `“metadata.lastModifiedOn>2020-01-01T01:00:00Z and metadata.lastModifiedOn<2020-12-01T01:00:00Z”` | Returns elements with lastModifiedOn metadata in the provided range. |
 
-## Querying Elements and ElementGroups
+### Examples
 
-### Sample Queries
+Query *wall* elements, and retrieve their *volume* properties:
 
-Retrieve elements matching multiple conditions:
-
-```json
-{
-  "filter": {
-    "name": "Middle Flooring",
-    "query": "'property.name.Length'>=2.0"
+```
+query {
+  elementsByElementGroup(
+    elementGroupId: "..."
+    filter: {
+      query: "property.name.category==Walls"
+    }
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+      properties(
+        filter: {
+          names: ["Volume"]
+        }
+      ) {
+        results {
+          name
+          value
+          definition {
+            units {
+              name
+            }
+          }
+        }
+      }
+    }
   }
 }
 ```
 
-Retrieve elementGroups created by multiple users:
+Query elements named `Flooring` with *length* larger than 2.0:
 
-```json
-{
-  "filter": {
-    "createdBy": ["user1@company.com", "user2@company.com"]
+```graphql
+query {
+  elementsByElementGroup(
+    elementGroupId: "..."
+    filter: {
+      name: "Flooring"
+      query: "'property.name.Length'>=2.0"
+    }
+  ) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+      properties {
+        results {
+          name
+          value
+          definition {
+            units {
+              name
+            }
+          }
+        }
+      }
+    }
   }
 }
 ```
@@ -148,12 +279,14 @@ Retrieve elementGroups created by multiple users:
 
 The AEC Data Model API supports data retrieval through cursor-based pagination. It uses a unique identifier (`cursor`) associated with each page to fetch the next set of results. This approach provides precise navigation through large datasets, ensuring efficient and responsive data retrieval.
 
+Whenever you are calculating aggregated values (such as sum, minimum, or maximum), **always collect all pages** before the calculation.
+
 ### Example
 
 Retrieving the first page (of up to 3 results) of a query:
 
 ```
-query GetHubs {
+query {
   hubs(pagination:{limit:3}) {
     pagination {
       cursor
@@ -167,7 +300,7 @@ query GetHubs {
 Next, if the response includes a certain value in `cursor`, let's say `Y3Vyc34xfjM`, repeat the query with the cursor:
 
 ```
-query GetHubs {
+query {
   hubs(pagination:{limit:3, cursor:"Y3Vyc34xfjM"}) {
     pagination {
       cursor
