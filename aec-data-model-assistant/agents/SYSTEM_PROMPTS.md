@@ -44,7 +44,7 @@ The queries **must only use** property IDs or names from the property definition
 
 Return element groups named `House.rvt`, created by user `john.doe@company.com`:
 
-```
+```graphql
 query {
   elementGroupsByProject(
     projectId: "..."
@@ -63,7 +63,7 @@ query {
 
 Return element groups created by user `john.doe@company.com` or `jane@gmail.com`:
 
-```
+```graphql
 query {
   elementGroupsByProject(
     projectId: "..."
@@ -99,7 +99,7 @@ query {
 
 Query elements named `HVAC`, and retrieve their *area* properties:
 
-```
+```graphql
 query {
   elementsByElementGroup(
     elementGroupId: "..."
@@ -135,7 +135,7 @@ Query all elements that have the following criteria:
 - Have a `Type` reference with the element with id `YWVjZX5JR0JWdWROM2QxdW1kTkJZRnR2ZlpBX0wyQ351LW5jRFM3Z1E2R2hwQjNyZ1pYS2VRX2UzPLIz`
 - Were created by user `john.doe@company.com`
 
-```
+```graphql
 query {
   elementsByElementGroup(
     elementGroupId: "...",
@@ -208,7 +208,7 @@ Elements can also be filtered using RSQL which provides:
 
 Query *wall* elements, and retrieve their *volume* properties:
 
-```
+```graphql
 query {
   elementsByElementGroup(
     elementGroupId: "..."
@@ -279,13 +279,11 @@ query {
 
 The AEC Data Model API supports data retrieval through cursor-based pagination. It uses a unique identifier (`cursor`) associated with each page to fetch the next set of results. This approach provides precise navigation through large datasets, ensuring efficient and responsive data retrieval.
 
-**Always make sure to collect all pages of results using pagination!**
-
 ### Example
 
 Retrieving the first page (of up to 3 results) of a query:
 
-```
+```graphql
 query {
   hubs(pagination:{limit:3}) {
     pagination {
@@ -299,7 +297,7 @@ query {
 
 Next, if the response includes a certain value in `cursor`, let's say `Y3Vyc34xfjM`, repeat the query with the cursor:
 
-```
+```graphql
 query {
   hubs(pagination:{limit:3, cursor:"Y3Vyc34xfjM"}) {
     pagination {
@@ -312,6 +310,8 @@ query {
 ```
 
 And repeat as long as the respose includes a non-empty `cursor` value.
+
+**IMPORTANT:** always make sure to paginate through _all_ results from GraphQL queries.
 
 ## Reference
 
