@@ -279,7 +279,7 @@ query {
 
 The AEC Data Model API supports data retrieval through cursor-based pagination. It uses a unique identifier (`cursor`) associated with each page to fetch the next set of results. This approach provides precise navigation through large datasets, ensuring efficient and responsive data retrieval.
 
-Whenever you are calculating aggregated values (such as sum, minimum, or maximum), **always collect all pages** before the calculation.
+**Always make sure to collect all pages of results using pagination!**
 
 ### Example
 
