@@ -57,7 +57,7 @@ async def _get_property_definitions(element_group_id: str, access_token: str, ca
         transport = AIOHTTPTransport(url=AECDM_ENDPOINT, headers={"Authorization": f"Bearer {access_token}"})
         client = Client(transport=transport, fetch_schema_from_transport=True)
         query = gql("""
-            query GetPropertyDefinitions($elementGroupId: ID!, $cursor:String) {
+            query GetPropertyDefinitions($elementGroupId: ID!, $cursor: String) {
                 elementGroupAtTip(elementGroupId:$elementGroupId) {
                     propertyDefinitions(pagination:{cursor:$cursor}) {
                         pagination {
@@ -88,6 +88,46 @@ async def _get_property_definitions(element_group_id: str, access_token: str, ca
     with open(props_cache_path) as f:
         property_definitions = json.load(f)
     return property_definitions
+
+async def _get_element_categories(element_group_id: str, access_token: str, cache_dir: str) -> list[str]:
+    categories_cache_path = os.path.join(cache_dir, "categories.json")
+    if not os.path.exists(categories_cache_path):
+        transport = AIOHTTPTransport(url=AECDM_ENDPOINT, headers={"Authorization": f"Bearer {access_token}"})
+        client = Client(transport=transport, fetch_schema_from_transport=True)
+        query = gql("""
+            query GetElementsFromCategory($elementGroupId: ID!, $cursor: String) {
+                elementsByElementGroup(
+                    elementGroupId: $elementGroupId
+                    pagination: {cursor: $cursor}
+                ) {
+                    pagination {
+                        cursor
+                    }
+                    results {
+                        properties(filter: {names: ["Revit Category Type Id"]}) {
+                            results {
+                                value
+                            }
+                        }
+                    }
+                }
+            }
+        """)
+        element_categories_set = set()
+        response = await client.execute_async(query, variable_values={"elementGroupId": element_group_id})
+        for element in response["elementsByElementGroup"]["results"]:
+            element_categories_set.update(result["value"] for result in element["properties"]["results"])
+        while response["elementsByElementGroup"]["pagination"]["cursor"]:
+            cursor = response["elementsByElementGroup"]["pagination"]["cursor"]
+            response = await client.execute_async(query, variable_values={"elementGroupId": element_group_id, "cursor": cursor})
+            for element in response["elementsByElementGroup"]["results"]:
+                element_categories_set.update(result["value"] for result in element["properties"]["results"])
+        element_categories = list(element_categories_set)
+        with open(categories_cache_path, "w") as f:
+            json.dump(list(element_categories), f)
+    with open(categories_cache_path) as f:
+        element_categories = json.load(f)
+    return element_categories
 
 async def _get_vector_store(element_group_id: str, access_token: str, cache_dir: str) -> VectorStore:
     index_cache_path = os.path.join(cache_dir, "faiss_index")
@@ -126,6 +166,11 @@ async def create_aecdm_agent(element_group_id: str, access_token: str, cache_dir
         return result
 
     @tool
+    async def get_element_categories() -> list[str]:
+        """Returns all element categories available in the AEC Data Model API."""
+        return await _get_element_categories(element_group_id, access_token, cache_dir)
+
+    @tool
     def execute_jq_query(query: str, input_json: str):
         """Processes the given JSON input with the given jq query, and returns the result as a JSON."""
         return jq.compile(query).input_text(input_json).all()
@@ -141,7 +186,7 @@ async def create_aecdm_agent(element_group_id: str, access_token: str, cache_dir
             "max_tokens": 4096
         }
     )
-    tools = [execute_graphql_query, execute_jq_query, retriever_tool]
+    tools = [execute_graphql_query, get_element_categories, execute_jq_query, retriever_tool]
     system_prompts = [
         SYSTEM_PROMPTS,
         AECDM_GRAPHQL,
