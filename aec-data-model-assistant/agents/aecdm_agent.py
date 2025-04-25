@@ -25,7 +25,7 @@ with open(os.path.join(os.path.dirname(__file__), "AECDM.graphql")) as f:
 _embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1")
 INDEX_DIMENSIONS = 1536
 AECDM_ENDPOINT = "https://developer.api.autodesk.com/aec/graphql"
-MAX_RESPONSE_SIZE = (1 << 12)
+MAX_RESPONSE_SIZE = (1 << 16)
 
 class Agent:
     def __init__(self, llm: BaseChatModel, prompt_template: ChatPromptTemplate, tools: list[BaseTool], cache_urn_dir: str):
@@ -120,7 +120,7 @@ async def create_aecdm_agent(element_group_id: str, access_token: str, cache_dir
         transport = AIOHTTPTransport(url=AECDM_ENDPOINT, headers={"Authorization": f"Bearer {access_token}"})
         client = Client(transport=transport, fetch_schema_from_transport=True)
         result = await client.execute_async(gql(query))
-        # Limit the response size to avoid overwhelming the LLM
+        # Limit the response size to avoid overwhelming the context window
         if len(json.dumps(result)) > MAX_RESPONSE_SIZE:
             raise ValueError(f"Result is too large. Please refine your query.")
         return result
