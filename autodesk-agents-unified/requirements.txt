@@ -1,0 +1,17 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+pyyaml==6.0.1
+boto3>=1.34.72
+langchain==0.1.0
+langchain-aws==0.1.0
+langchain-community==0.0.10
+opensearch-py==2.4.0
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+structlog==23.2.0
+psutil==5.9.6
+pyjwt==2.8.0
+aiofiles==23.2.1
+watchdog==3.0.0

@@ -1,0 +1,48 @@
+# Production Environment Configuration
+core:
+  aws_region: "us-east-1"
+  bedrock_model_id: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  opensearch_endpoint: ""  # Set via OPENSEARCH_ENDPOINT environment variable
+  cache_directory: "/app/cache"
+  log_level: "INFO"
+  health_check_interval: 60
+  auth_enabled: true
+
+# Agent configurations for production
+agents:
+  model_properties:
+    enabled: true
+    tools:
+      - "create_index"
+      - "list_index_properties" 
+      - "query_index"
+      - "execute_jq_query"
+    config:
+      cache_ttl: 3600
+      max_query_results: 1000
+      retry_attempts: 3
+      timeout: 30
+  
+  aec_data_model:
+    enabled: true
+    tools:
+      - "execute_graphql_query"
+      - "get_element_categories"
+      - "execute_jq_query"
+      - "find_related_property_definitions"
+    config:
+      vector_store_index: "aec_property_definitions"
+      similarity_threshold: 0.7
+      max_search_results: 8
+      retry_attempts: 3
+      timeout: 30
+      
+  model_derivatives:
+    enabled: true
+    tools:
+      - "sql_database_toolkit"
+    config:
+      database_timeout: 30
+      max_query_results: 10000
+      connection_pool_size: 10
+      retry_attempts: 3

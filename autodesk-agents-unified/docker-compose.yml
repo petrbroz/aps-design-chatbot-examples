@@ -1,0 +1,108 @@
+# Docker Compose for Autodesk Agents Unified - Local Development
+version: '3.8'
+
+services:
+  # Main application service
+  agents-unified:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+    environment:
+      - AGENT_CONFIG_PATH=/app/config/development.yaml
+      - AWS_REGION=us-east-1
+      - OPENSEARCH_ENDPOINT=http://opensearch:9200
+      - CACHE_DIRECTORY=/app/cache
+      - LOG_LEVEL=DEBUG
+      - AUTH_ENABLED=false
+    volumes:
+      - .:/app
+      - cache_data:/app/cache
+    depends_on:
+      - opensearch
+      - localstack
+    networks:
+      - agents-network
+    restart: unless-stopped
+
+  # OpenSearch for vector storage
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch-dev
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - agents-network
+
+  # OpenSearch Dashboards for development
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: opensearch-dashboards-dev
+    ports:
+      - "5601:5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    depends_on:
+      - opensearch
+    networks:
+      - agents-network
+
+  # LocalStack for AWS services simulation
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: localstack-dev
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=bedrock,s3,sts
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOST=localhost
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - localstack_data:/var/lib/localstack
+    networks:
+      - agents-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - agents-network
+    command: redis-server --appendonly yes
+
+volumes:
+  opensearch_data:
+  localstack_data:
+  redis_data:
+  cache_data:
+
+networks:
+  agents-network:
+    driver: bridge
