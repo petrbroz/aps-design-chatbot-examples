@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentCore API Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .status {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 20px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-panel {
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .output-panel {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quick-tests {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .quick-test-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin: 4px;
+            transition: background 0.2s;
+        }
+        
+        .quick-test-btn:hover {
+            background: #218838;
+        }
+        
+        .output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .response-metadata {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .error {
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AgentCore API Test Interface</h1>
+            <p>Test the unified Autodesk agent system with real-time API calls</p>
+        </div>
+        
+        <div class="status">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>System Status: <strong id="system-status">Checking...</strong></span>
+            </div>
+            <div class="status-indicator">
+                <span>Mode: <strong id="system-mode">Unknown</strong></span>
+            </div>
+            <div class="status-indicator">
+                <span>Agents: <strong id="agent-count">0</strong></span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-panel">
+                <h3>🔧 API Request Configuration</h3>
+                
+                <div class="form-group">
+                    <label for="agent-select">Agent Type:</label>
+                    <select id="agent-select">
+                        <option value="model-properties">Model Properties Agent</option>
+                        <option value="aec-data-model">AEC Data Model Agent</option>
+                        <option value="model-derivatives">Model Derivatives Agent</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prompt-input">Prompt:</label>
+                    <textarea id="prompt-input" placeholder="Enter your question or request...">Show me wall properties</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-id">Project ID (optional):</label>
+                    <input type="text" id="project-id" placeholder="b.project123" value="b.project123">
+                </div>
+                
+                <div class="form-group">
+                    <label for="version-id">Version ID (optional):</label>
+                    <input type="text" id="version-id" placeholder="version456">
+                </div>
+                
+                <button class="btn" id="send-request" onclick="sendRequest()">🚀 Send Request</button>
+                
+                <div class="quick-tests">
+                    <h4>⚡ Quick Tests:</h4>
+                    <button class="quick-test-btn" onclick="quickTest('wall')">Wall Properties</button>
+                    <button class="quick-test-btn" onclick="quickTest('door')">Door Analysis</button>
+                    <button class="quick-test-btn" onclick="quickTest('window')">Window Data</button>
+                    <button class="quick-test-btn" onclick="quickTest('area')">Area Calculation</button>
+                    <button class="quick-test-btn" onclick="quickTest('help')">Help</button>
+                    <button class="quick-test-btn" onclick="testHealth()">Health Check</button>
+                </div>
+            </div>
+            
+            <div class="output-panel">
+                <h3>📊 API Response</h3>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Sending request to AgentCore...</p>
+                </div>
+                
+                <div class="output" id="output">Welcome to the AgentCore API Test Interface!
+
+🚀 Ready to test the unified agent system.
+
+📋 Instructions:
+1. Select an agent type
+2. Enter your prompt
+3. Click "Send Request"
+4. View the response here
+
+💡 Try the quick test buttons for common queries!</div>
+                
+                <div class="response-metadata" id="metadata" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        
+        // Check system status on load
+        window.addEventListener('load', checkSystemStatus);
+        
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('system-status').textContent = data.status || 'Unknown';
+                document.getElementById('system-mode').textContent = data.mode || 'Unknown';
+                
+                const agentCount = data.agents ? Object.keys(data.agents).length : 0;
+                document.getElementById('agent-count').textContent = agentCount;
+                
+                // Update status dot color
+                const statusDot = document.querySelector('.status-dot');
+                if (data.status === 'healthy') {
+                    statusDot.style.background = '#28a745';
+                } else {
+                    statusDot.style.background = '#dc3545';
+                }
+                
+            } catch (error) {
+                document.getElementById('system-status').textContent = 'Offline';
+                document.getElementById('system-mode').textContent = 'Error';
+                document.querySelector('.status-dot').style.background = '#dc3545';
+                console.error('Failed to check system status:', error);
+            }
+        }
+        
+        async function sendRequest() {
+            const agent = document.getElementById('agent-select').value;
+            const prompt = document.getElementById('prompt-input').value;
+            const projectId = document.getElementById('project-id').value;
+            const versionId = document.getElementById('version-id').value;
+            
+            if (!prompt.trim()) {
+                alert('Please enter a prompt!');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('output').style.display = 'none';
+            document.getElementById('metadata').style.display = 'none';
+            document.getElementById('send-request').disabled = true;
+            
+            try {
+                const requestBody = {
+                    prompt: prompt,
+                    ...(projectId && { project_id: projectId }),
+                    ...(versionId && { version_id: versionId })
+                };
+                
+                const response = await fetch(`${API_BASE}/api/v1/${agent}/prompt`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('output').style.display = 'block';
+                
+                if (response.ok) {
+                    displayResponse(data);
+                } else {
+                    displayError(data);
+                }
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('output').style.display = 'block';
+                displayError({ error: error.message });
+            } finally {
+                document.getElementById('send-request').disabled = false;
+            }
+        }
+        
+        function displayResponse(data) {
+            const output = document.getElementById('output');
+            const metadata = document.getElementById('metadata');
+            
+            // Format the main response
+            let responseText = '';
+            if (data.responses && Array.isArray(data.responses)) {
+                responseText = data.responses.join('\n');
+            } else if (data.message) {
+                responseText = data.message;
+            } else {
+                responseText = JSON.stringify(data, null, 2);
+            }
+            
+            output.textContent = responseText;
+            output.style.background = '#2c3e50';
+            output.style.color = '#ecf0f1';
+            
+            // Show metadata if available
+            if (data.metadata) {
+                metadata.style.display = 'block';
+                metadata.innerHTML = `
+                    <strong>Response Metadata:</strong><br>
+                    Agent: ${data.agent_type || 'Unknown'}<br>
+                    Success: ${data.success ? '✅ Yes' : '❌ No'}<br>
+                    ${data.metadata.project_id ? `Project: ${data.metadata.project_id}<br>` : ''}
+                    ${data.metadata.elements_analyzed ? `Elements: ${data.metadata.elements_analyzed}<br>` : ''}
+                    ${data.metadata.data_source ? `Source: ${data.metadata.data_source}<br>` : ''}
+                    ${data.metadata.agentcore_version ? `Version: ${data.metadata.agentcore_version}` : ''}
+                `;
+            } else {
+                metadata.style.display = 'none';
+            }
+        }
+        
+        function displayError(data) {
+            const output = document.getElementById('output');
+            const metadata = document.getElementById('metadata');
+            
+            output.style.background = '#dc3545';
+            output.style.color = 'white';
+            output.textContent = `❌ Error: ${data.error || data.detail || 'Unknown error occurred'}`;
+            
+            metadata.style.display = 'none';
+        }
+        
+        function quickTest(type) {
+            const prompts = {
+                'wall': 'Show me wall properties',
+                'door': 'Analyze door specifications',
+                'window': 'List window properties and areas',
+                'area': 'Calculate total building areas',
+                'help': 'What can you help me with?'
+            };
+            
+            document.getElementById('prompt-input').value = prompts[type] || type;
+            sendRequest();
+        }
+        
+        async function testHealth() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('output').style.display = 'none';
+            document.getElementById('metadata').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('output').style.display = 'block';
+                
+                const output = document.getElementById('output');
+                output.style.background = '#28a745';
+                output.style.color = 'white';
+                output.textContent = `🏥 System Health Check\n\nStatus: ${data.status}\nMode: ${data.mode}\n\nAgents:\n${Object.entries(data.agents || {}).map(([name, info]) => `• ${name}: ${info.status} (${info.mock ? 'mock' : 'live'})`).join('\n')}\n\nServices:\n${Object.entries(data.services || {}).map(([name, status]) => `• ${name}: ${status}`).join('\n')}`;
+                
+                // Update status indicators
+                checkSystemStatus();
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('output').style.display = 'block';
+                displayError({ error: error.message });
+            }
+        }
+        
+        // Allow Enter key to send request (Ctrl+Enter)
+        document.getElementById('prompt-input').addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'Enter') {
+                sendRequest();
+            }
+        });
+        
+        // Auto-refresh status every 30 seconds
+        setInterval(checkSystemStatus, 30000);
+    </script>
+</body>
+</html>

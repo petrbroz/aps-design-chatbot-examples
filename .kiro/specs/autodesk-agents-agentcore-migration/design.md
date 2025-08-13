@@ -177,7 +177,8 @@ class AuthContext:
 class CoreConfig:
     aws_region: str
     bedrock_model_id: str
-    opensearch_endpoint: str
+    aws_opensearch_endpoint: str  # AWS OpenSearch Service endpoint
+    aws_opensearch_domain: str    # OpenSearch domain name
     cache_directory: str
     log_level: str
     health_check_interval: int
@@ -192,20 +193,38 @@ class AgentConfig:
 
 ### Vector Store Migration
 
-The AEC Data Model agent will migrate from FAISS to OpenSearch:
+The AEC Data Model agent will migrate from FAISS to AWS OpenSearch for Bedrock:
 
 ```python
 class OpenSearchVectorStore:
-    def __init__(self, opensearch_client: OpenSearch, index_name: str):
-        self.client = opensearch_client
+    def __init__(self, opensearch_endpoint: str, region_name: str, index_name: str):
+        self.client = self._create_aws_opensearch_client(opensearch_endpoint, region_name)
         self.index_name = index_name
-        self.embeddings = BedrockEmbeddings()
+        self.embeddings = BedrockEmbeddings(region_name=region_name)
+    
+    def _create_aws_opensearch_client(self, endpoint: str, region: str) -> OpenSearch:
+        """Create AWS OpenSearch client with IAM authentication"""
+        from opensearchpy import OpenSearch, RequestsHttpConnection
+        from requests_aws4auth import AWS4Auth
+        import boto3
+        
+        credentials = boto3.Session().get_credentials()
+        awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, 
+                          region, 'es', session_token=credentials.token)
+        
+        return OpenSearch(
+            hosts=[{'host': endpoint.replace('https://', ''), 'port': 443}],
+            http_auth=awsauth,
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection
+        )
     
     async def add_documents(self, documents: List[Document]) -> None:
-        """Add documents to OpenSearch index"""
+        """Add documents to AWS OpenSearch index with Bedrock embeddings"""
         
     async def similarity_search(self, query: str, k: int = 8) -> List[Document]:
-        """Perform similarity search using OpenSearch"""
+        """Perform similarity search using AWS OpenSearch and Bedrock embeddings"""
 ```
 
 ## Error Handling
@@ -303,7 +322,8 @@ FROM base as production
 core:
   aws_region: "us-east-1"
   bedrock_model_id: "anthropic.claude-3-5-sonnet-20241022-v2:0"
-  opensearch_endpoint: "${OPENSEARCH_ENDPOINT}"
+  aws_opensearch_endpoint: "${AWS_OPENSEARCH_ENDPOINT}"  # e.g., https://search-agentcore-xyz.us-east-1.es.amazonaws.com
+  aws_opensearch_domain: "${AWS_OPENSEARCH_DOMAIN}"      # e.g., agentcore-vectors
   cache_directory: "/app/cache"
   log_level: "INFO"
 

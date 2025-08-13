@@ -22,7 +22,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from agent_core.core import AgentCore
-from agent_core.config import CoreConfig
+from agent_core.config import CoreConfig, ConfigManager
 from agent_core.orchestrator import StrandsOrchestrator
 from agent_core.api_gateway import APIGateway
 from agent_core.agents.model_properties_agent import ModelPropertiesAgent
@@ -57,12 +57,7 @@ class UnifiedAgentServer:
         try:
             # 1. Initialize AgentCore
             logger.info("📋 Initializing AgentCore...")
-            if self.config_path:
-                config = CoreConfig.from_file(self.config_path)
-            else:
-                config = CoreConfig()
-            
-            self.agent_core = AgentCore(config)
+            self.agent_core = AgentCore(self.config_path)
             await self.agent_core.initialize()
             logger.info("✅ AgentCore initialized successfully")
             
@@ -78,19 +73,19 @@ class UnifiedAgentServer:
             # Model Properties Agent
             logger.info("  - Registering Model Properties Agent...")
             mp_agent = ModelPropertiesAgent(self.agent_core)
-            await self.orchestrator.register_agent("model_properties", mp_agent)
+            await self.orchestrator.register_agent(mp_agent)
             logger.info("    ✅ Model Properties Agent registered")
             
             # AEC Data Model Agent
             logger.info("  - Registering AEC Data Model Agent...")
             aec_agent = AECDataModelAgent(self.agent_core)
-            await self.orchestrator.register_agent("aec_data_model", aec_agent)
+            await self.orchestrator.register_agent(aec_agent)
             logger.info("    ✅ AEC Data Model Agent registered")
             
             # Model Derivatives Agent
             logger.info("  - Registering Model Derivatives Agent...")
             md_agent = ModelDerivativesAgent(self.agent_core)
-            await self.orchestrator.register_agent("model_derivatives", md_agent)
+            await self.orchestrator.register_agent(md_agent)
             logger.info("    ✅ Model Derivatives Agent registered")
             
             logger.info("✅ All agents registered successfully")

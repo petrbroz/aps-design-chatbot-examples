@@ -1,0 +1,75 @@
+# AgentCore Configuration
+# Production-ready configuration for unified Autodesk agent deployment
+
+core:
+  # AWS Configuration
+  aws_region: "us-east-1"
+  bedrock_model_id: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  bedrock_max_tokens: 4000
+  bedrock_temperature: 0.1
+  
+  # Autodesk API Configuration (set via environment variables)
+  autodesk_base_url: "https://developer.api.autodesk.com"
+  autodesk_auth_url: "https://developer.api.autodesk.com/authentication/v2/token"
+  
+  # AWS OpenSearch Configuration
+  aws_opensearch_endpoint: "${AWS_OPENSEARCH_ENDPOINT}"  # e.g., https://search-agentcore-xyz.us-east-1.es.amazonaws.com
+  aws_opensearch_domain: "${AWS_OPENSEARCH_DOMAIN}"      # e.g., agentcore-vectors
+  opensearch_index_prefix: "agentcore"
+  opensearch_use_aws_auth: true
+  
+  # Core Settings
+  cache_directory: "./cache"
+  log_level: "INFO"
+  health_check_interval: 30
+  
+  # API Gateway Settings
+  api_host: "0.0.0.0"
+  api_port: 8000
+  api_cors_origins: ["*"]
+  api_trusted_hosts: ["*"]
+
+# Agent Configurations
+agents:
+  model_properties:
+    enabled: true
+    tools:
+      - "create_index"
+      - "list_index_properties"
+      - "query_index"
+      - "execute_jq_query"
+    cache_ttl: 3600
+    max_results: 100
+    specific_config:
+      # Model Properties specific settings
+      index_cache_size: 50
+      property_batch_size: 1000
+  
+  aec_data_model:
+    enabled: true
+    tools:
+      - "execute_graphql_query"
+      - "get_element_categories"
+      - "execute_jq_query"
+      - "find_related_property_definitions"
+    cache_ttl: 3600
+    max_results: 100
+    specific_config:
+      # AEC Data Model specific settings
+      graphql_endpoint: "https://developer.api.autodesk.com/aec/graphql"
+      aws_opensearch_endpoint: "${AWS_OPENSEARCH_ENDPOINT}"
+      aws_opensearch_domain: "${AWS_OPENSEARCH_DOMAIN}"
+      vector_search_k: 8
+      embedding_batch_size: 100
+  
+  model_derivatives:
+    enabled: true
+    tools:
+      - "sql_database_toolkit"
+    cache_ttl: 3600
+    max_results: 1000
+    specific_config:
+      # Model Derivatives specific settings
+      database_path: "./cache/derivatives.db"
+      max_db_size_mb: 500
+      query_timeout_seconds: 30

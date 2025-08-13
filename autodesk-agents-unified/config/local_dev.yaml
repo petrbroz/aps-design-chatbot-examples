@@ -1,0 +1,66 @@
+# Local Development Configuration for AgentCore
+core:
+  aws_region: "us-east-1"
+  bedrock_model_id: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  opensearch_endpoint: "http://localhost:9200"  # Local OpenSearch
+  cache_directory: "./dev_cache"
+  log_level: "DEBUG"
+  health_check_interval: 10
+  auth_enabled: false  # Disable auth for local development
+  
+# AWS Configuration (will use environment variables or AWS credentials)
+aws:
+  region: "us-east-1"
+  bedrock_model_id: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  
+# OpenSearch Configuration
+opensearch:
+  endpoint: "http://localhost:9200"
+  index_prefix: "agentcore_dev"
+  timeout: 30
+  
+# Agent configurations
+agents:
+  model_properties:
+    enabled: true
+    tools:
+      - "create_index"
+      - "list_index_properties" 
+      - "query_index"
+      - "execute_jq_query"
+    config:
+      cache_ttl: 300
+      max_query_results: 100
+      
+  aec_data_model:
+    enabled: true
+    tools:
+      - "execute_graphql_query"
+      - "get_element_categories"
+      - "execute_jq_query"
+      - "find_related_property_definitions"
+    config:
+      vector_store_index: "aec_property_definitions_dev"
+      similarity_threshold: 0.6
+      max_search_results: 5
+      
+  model_derivatives:
+    enabled: true
+    tools:
+      - "sql_database_toolkit"
+    config:
+      database_timeout: 10
+      max_query_results: 1000
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]
+  trusted_hosts: ["*"]
+  
+# Logging Configuration
+logging:
+  level: "DEBUG"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./logs/agentcore.log"

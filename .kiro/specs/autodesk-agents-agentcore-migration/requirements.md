@@ -63,15 +63,16 @@ This feature involves migrating three existing Autodesk Data agents (ACC Model P
 
 ### Requirement 6
 
-**User Story:** As a developer, I want the vector store implementation to be upgraded from FAISS to OpenSearch with Bedrock, so that I can have better scalability and cloud-native vector search capabilities.
+**User Story:** As a developer, I want the vector store implementation to be upgraded from FAISS to AWS OpenSearch for Bedrock, so that I can have better scalability, cloud-native vector search capabilities, and seamless AWS integration.
 
 #### Acceptance Criteria
 
-1. WHEN the AEC Data Model agent needs vector search THEN the system SHALL use OpenSearch with Bedrock instead of FAISS
-2. WHEN property definitions are indexed THEN the system SHALL store them in OpenSearch vector store
-3. WHEN similarity searches are performed THEN the system SHALL use OpenSearch's vector search capabilities
-4. WHEN embeddings are generated THEN the system SHALL continue to use Bedrock embeddings service
-5. WHEN the system initializes THEN it SHALL automatically set up OpenSearch indexes if they don't exist
+1. WHEN the AEC Data Model agent needs vector search THEN the system SHALL use AWS OpenSearch Service with Bedrock instead of FAISS
+2. WHEN property definitions are indexed THEN the system SHALL store them in AWS OpenSearch vector store with IAM authentication
+3. WHEN similarity searches are performed THEN the system SHALL use AWS OpenSearch's k-NN vector search capabilities
+4. WHEN embeddings are generated THEN the system SHALL use AWS Bedrock embeddings service (Titan or other supported models)
+5. WHEN the system initializes THEN it SHALL automatically connect to the specified AWS OpenSearch domain and create indexes if they don't exist
+6. WHEN authentication is required THEN the system SHALL use AWS IAM roles and policies for secure access to OpenSearch and Bedrock services
 
 ### Requirement 7
 
