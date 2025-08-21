@@ -49,6 +49,10 @@ class OpenSearchVectorStore:
         self.dimension = dimension
         self.logger = get_logger(__name__)
         
+        # Validate OpenSearch endpoint
+        if not opensearch_endpoint or not opensearch_endpoint.strip():
+            raise ValueError("OpenSearch endpoint is required and cannot be empty")
+        
         # Initialize OpenSearch client
         self.client = OpenSearch(
             hosts=[opensearch_endpoint],

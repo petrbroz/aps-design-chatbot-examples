@@ -237,26 +237,51 @@ class AECDataModelAgent(BaseAgent):
             }
         )
         
-        # Initialize OpenSearch vector store
-        self._vector_store = OpenSearchVectorStore(
-            opensearch_endpoint=self.agent_core.config.opensearch_endpoint,
-            index_name="aec-property-definitions",
-            embeddings_model_id="amazon.titan-embed-text-v1",
-            aws_region=self.agent_core.config.aws_region
-        )
-        await self._vector_store.initialize()
-        
-        # Initialize property definitions manager
-        self._property_manager = PropertyDefinitionsManager(self._vector_store)
+        # Initialize OpenSearch vector store (optional)
+        if self.agent_core.config.opensearch_endpoint and self.agent_core.config.opensearch_endpoint.strip():
+            try:
+                self._vector_store = OpenSearchVectorStore(
+                    opensearch_endpoint=self.agent_core.config.opensearch_endpoint,
+                    index_name="aec-property-definitions",
+                    embeddings_model_id="amazon.titan-embed-text-v1",
+                    aws_region=self.agent_core.config.aws_region
+                )
+                await self._vector_store.initialize()
+                
+                # Initialize property definitions manager
+                self._property_manager = PropertyDefinitionsManager(self._vector_store)
+                
+                self.agent_core.logger.info(
+                    "OpenSearch vector store initialized successfully",
+                    agent_type=self.get_agent_type(),
+                    endpoint=self.agent_core.config.opensearch_endpoint
+                )
+            except Exception as e:
+                self.agent_core.logger.warning(
+                    f"Failed to initialize OpenSearch vector store: {str(e)}",
+                    agent_type=self.get_agent_type()
+                )
+                self._vector_store = None
+                self._property_manager = None
+        else:
+            self.agent_core.logger.warning(
+                "OpenSearch endpoint not configured, vector store features will be disabled",
+                agent_type=self.get_agent_type()
+            )
+            self._vector_store = None
+            self._property_manager = None
         
         # Create AEC Data Model specific tools if not provided
         if not self.tools:
             self.tools = [
                 ExecuteGraphQLQueryTool(),
                 GetElementCategoriesTool(),
-                ExecuteJQQueryTool(),
-                FindRelatedPropertyDefinitionsTool(self._vector_store)
+                ExecuteJQQueryTool()
             ]
+            
+            # Add vector store tool only if vector store is available
+            if self._vector_store:
+                self.tools.append(FindRelatedPropertyDefinitionsTool(self._vector_store))
             
             # Update tool registry for quick lookup
             self._tool_registry = {tool.name: tool for tool in self.tools}
@@ -378,6 +403,13 @@ Final Answer: the final answer to the original input question"""
         cache_dir: str
     ) -> None:
         """Ensure property definitions are loaded in the vector store."""
+        if not self._property_manager:
+            self.agent_core.logger.debug(
+                "Property manager not available, skipping property definitions loading",
+                agent_type=self.get_agent_type()
+            )
+            return
+            
         if not auth_context.element_group_id:
             self.agent_core.logger.warning(
                 "No element group ID provided, skipping property definitions loading",

@@ -46,8 +46,9 @@ class AgentCore:
         try:
             # Load and validate configuration
             self.config = self.config_manager.load_config()
-            if not self.config_manager.validate_config():
-                raise RuntimeError("Configuration validation failed")
+            is_valid, error_message = self.config_manager.validate_config()
+            if not is_valid:
+                raise RuntimeError(f"Configuration validation failed: {error_message}")
             
             # Initialize core services
             self.logger = StructuredLogger(
