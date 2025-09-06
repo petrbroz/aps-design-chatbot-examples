@@ -1,0 +1,14 @@
+[project]
+name = "aps-model-derivs-assistant"
+version = "0.1.0"
+description = "Experimental chatbot for querying design data in Autodesk Construction Cloud using custom Amazon Bedrock AgentCore and Autodesk Platform Services."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bedrock-agentcore>=0.1.2",
+    "bedrock-agentcore-starter-toolkit>=0.1.8",
+    "fastapi>=0.116.1",
+    "httpx>=0.28.1",
+    "strands-agents>=1.7.0",
+    "strands-agents-tools>=0.2.6"
+]

@@ -1,3 +1,5 @@
+import { DESIGN_AGENT_API } from "./config.js";
+
 export function initChatbot(authProvider, urn) {
     const $chatbot = document.querySelector("#chatbot");
     $chatbot.innerHTML = `
@@ -37,9 +39,12 @@ export function initChatbot(authProvider, urn) {
         $input.setAttribute("disabled", "true");
         $button.innerText = "Thinking...";
         $button.setAttribute("disabled", "true");
+
+        // Create assistant message container for streaming
+        const assistantCard = createStreamingChatMessage("Assistant");
+
         try {
-            const answer = await submitPrompt(prompt, urn, authProvider);
-            addChatMessage("Assistant", answer);
+            await submitPrompt(prompt, urn, authProvider, assistantCard);
         } catch (err) {
             console.error(err);
             alert("Unable to process the query. See console for more details.");
@@ -62,21 +67,45 @@ export function initChatbot(authProvider, urn) {
     }
 }
 
-async function submitPrompt(prompt, urn, authProvider) {
+async function submitPrompt(prompt, urn, authProvider, messageCard) {
     const credentials = await authProvider.getCredentials();
-    const resp = await fetch(`/chatbot/prompt`, {
+    const resp = await fetch(DESIGN_AGENT_API, {
         method: "post",
         headers: {
-            "Authorization": `Bearer ${credentials.access_token}`,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ urn, prompt })
+        body: JSON.stringify({
+            prompt,
+            aps_design_urn: urn,
+            aps_access_token: credentials.access_token,
+        })
     });
-    if (resp.ok) {
-        const { responses } = await resp.json();
-        return responses.join("\n\n");
-    } else {
+
+    if (!resp.ok) {
         throw new Error(await resp.text());
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = "";
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            let chunk = decoder.decode(value, { stream: true });
+            for (const line of chunk.split("\n")) {
+                if (line.startsWith("data:")) {
+                    const data = JSON.parse(line.slice(5).trim());
+                    if (data) {
+                        accumulatedText += data;
+                    }
+                }
+            }
+            updateStreamingChatMessage(messageCard, accumulatedText);
+        }
+    } finally {
+        reader.releaseLock();
     }
 }
 
@@ -88,5 +117,24 @@ function addChatMessage(title, message) {
     card.innerHTML = `<div slot="header">${title}</div>${message}`;
     const _history = document.getElementById("chatbot-history");
     _history.appendChild(card);
+    setTimeout(() => _history.scrollTop = _history.scrollHeight, 1);
+}
+
+function createStreamingChatMessage(title) {
+    const card = document.createElement("sl-card");
+    card.classList.add("card-header");
+    card.style.margin = "0.5em";
+    card.innerHTML = `<div slot="header">${title}</div><div class="message-content"></div>`;
+    const _history = document.getElementById("chatbot-history");
+    _history.appendChild(card);
+    setTimeout(() => _history.scrollTop = _history.scrollHeight, 1);
+    return card;
+}
+
+function updateStreamingChatMessage(card, text) {
+    const messageContent = card.querySelector('.message-content');
+    const sanitizedText = DOMPurify.sanitize(marked.parse(text)); // Sanitize and render markdown
+    messageContent.innerHTML = sanitizedText;
+    const _history = document.getElementById("chatbot-history");
     setTimeout(() => _history.scrollTop = _history.scrollHeight, 1);
 }

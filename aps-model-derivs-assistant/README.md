@@ -1,40 +1,30 @@
-# APS Model Derivatives Assistant
+# aps-model-derivs-assistant
 
-Experimental chatbot for querying design data in [Autodesk Construction Cloud](https://construction.autodesk.com/) using custom [LangChain](https://www.langchain.com) agents and [Autodesk Platform Services](https://aps.autodesk.com) ([Model Derivatives API](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/)).
+Experimental chatbot for querying design data in [Autodesk Construction Cloud](https://construction.autodesk.com/) using custom [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore) and [Autodesk Platform Services](https://aps.autodesk.com).
 
 ![Thumbnail](thumbnail.png)
 
 ## How does it work?
 
-For any design selected in the frontend, the application extracts its various properties using the [Model Derivatives API](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/), and caches the data in a local [sqlite](https://www.sqlite.org/) database. Then, the application uses a [LangGraph agent](https://python.langchain.com/docs/how_to/migrate_agent/) with built-in tools for querying the database based on user prompts.
-
-## Usage
-
-Login with your Autodesk credentials, select one of your design files in ACC, and try some of the prompts below:
-
-> what are the top 5 elements with the largest area?
-
-> give me the list of IDs of all wall elements
-
-> what is the average height of doors?
-
-> what is the sum of volumes of all floors?
+For any design selected in the frontend, the application extracts its various properties using the [Model Derivatives API](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/), and caches the data in a local [sqlite](https://www.sqlite.org) database. Then, the application uses a [Strands Agents](https://strandsagents.com/latest) to query the database based on user prompts.
 
 ## Development
 
 ### Prerequisites
 
-- [APS application](https://aps.autodesk.com/en/docs/oauth/v2/tutorials/create-app/) of the _Desktop, Mobile, Single-Page App_ type
-- [OpenAI API key](https://platform.openai.com/docs/quickstart/create-and-export-an-api-key)
-- [Python 3.x](https://www.python.org/downloads/)
+- Python 3.13 and [uv](https://github.com/astral-sh/uv)
+- Autodesk Platform Services application (must be of type _Desktop, Mobile, Single-Page App_)
+- Amazon Bedrock AgentCore
 
 ### Setup
 
-- Clone the repository
-- Initialize and activate a virtual environment: `python3 -m venv .venv && source .venv/bin/activate`
-- Install Python dependencies: `pip install -r requirements.txt`
-- Update [static/config.js](static/config.js) with your APS client ID and callback URL
-- Set the following environment variables:
-  - `OPENAI_API_KEY` - your OpenAI API key
-- Run the dev server: `python server.py`
-- Open http://localhost:8000 in the browser
+- Create virtual environment: `uv venv && source .venv/bin/activate`
+- Install dependencies: `uv sync`
+- Update [www/config.js](www/config.js) with your APS application's client ID
+- Configure your AWS credentials
+
+### Run
+
+- Run the backend service: `uv run app.py`
+- Serve the web frontend: `python3 -m http.server -d www 8000`
+- Go to [http://localhost:8000](http://localhost:8000)

@@ -1,8 +1,35 @@
-import os
-import json
+import asyncio
+import httpx
 import sqlite3
-from langchain_community.utilities import SQLDatabase
-from aps import ModelDerivativesClient
+
+
+class ModelDerivativesClient:
+    def __init__(self, access_token: str, host: str = "https://developer.api.autodesk.com"):
+        self.client = httpx.AsyncClient()
+        self.access_token = access_token
+        self.host = host
+
+    async def _get(self, endpoint: str) -> dict:
+        response = await self.client.get(f"{self.host}/{endpoint}", headers={"Authorization": f"Bearer {self.access_token}"})
+        while response.status_code == 202:
+            await asyncio.sleep(1)
+            response = await self.client.get(f"{self.host}/{endpoint}", headers={"Authorization": f"Bearer {self.access_token}"})
+        if response.status_code >= 400:
+            raise Exception(response.text)
+        return response.json()
+
+    async def list_model_views(self, urn: str) -> dict:
+        json = await self._get(f"modelderivative/v2/designdata/{urn}/metadata")
+        return json["data"]["metadata"]
+
+    async def fetch_object_tree(self, urn: str, model_guid: str) -> dict:
+        json = await self._get(f"modelderivative/v2/designdata/{urn}/metadata/{model_guid}")
+        return json["data"]["objects"]
+
+    async def fetch_all_properties(self, urn: str, model_guid: str) -> dict:
+        json = await self._get(f"modelderivative/v2/designdata/{urn}/metadata/{model_guid}/properties")
+        return json["data"]["collection"]
+
 
 def _parse_length(value):
     units = {
@@ -60,6 +87,7 @@ def _parse_angle(value):
     number, unit = value.split()
     return float(number) * units[unit]
 
+
 # Define the properties to extract from the model
 # (column name, column type, category name, property name, parsing function)
 PROPERTIES = [
@@ -76,44 +104,42 @@ PROPERTIES = [
     ("material",    "TEXT", "Materials and Finishes",   "Structural Material",  lambda x: x),
 ]
 
-async def setup(urn: str, access_token: str, cache_urn_dir: str) -> SQLDatabase:
-    propdb_path = os.path.join(cache_urn_dir, "props.sqlite3")
-    if os.path.exists(propdb_path):
-        return SQLDatabase.from_uri(f"sqlite:///{propdb_path}")
 
+def _create_categories_map(root):
+    category_map = {}
+    def _traverse(node, path):
+        if "objects" in node:
+            path = node["name"] if path == "" else path + " > " + node["name"]
+            for child in node["objects"]:
+                _traverse(child, path)
+        else:
+            category_map[node["objectid"]] = path
+    _traverse(root, "")
+    return category_map
+
+
+def get_property_db_schema() -> str:
+    return f"CREATE TABLE properties (object_id INTEGER, name TEXT, external_id TEXT, category TEXT, {", ".join([f'{column_name} {column_type}' for (column_name, column_type, _, _, _) in PROPERTIES])})"
+
+
+async def save_property_db(urn: str, access_token: str, sqlite_db_path: str):
     model_derivative_client = ModelDerivativesClient(access_token)
-
-    views_path = os.path.join(cache_urn_dir, "views.json")
-    if not os.path.exists(views_path):
-        views = await model_derivative_client.list_model_views(urn)
-        with open(views_path, "w") as f: json.dump(views, f)
-    else:
-        with open(views_path, "r") as f: views = json.load(f)
+    views = await model_derivative_client.list_model_views(urn)
     view_guid = views[0]["guid"] # Use the first view
-
-    tree_path = os.path.join(cache_urn_dir, "tree.json")
-    if not os.path.exists(tree_path):
-        tree = await model_derivative_client.fetch_object_tree(urn, view_guid)
-        with open(tree_path, "w") as f: json.dump(tree, f)
-    else:
-        with open(tree_path, "r") as f: tree = json.load(f)
-
-    props_path = os.path.join(cache_urn_dir, "props.json")
-    if not os.path.exists(props_path):
-        props = await model_derivative_client.fetch_all_properties(urn, view_guid)
-        with open(props_path, "w") as f: json.dump(props, f)
-    else:
-        with open(props_path, "r") as f: props = json.load(f)
-
-    conn = sqlite3.connect(propdb_path)
+    tree = await model_derivative_client.fetch_object_tree(urn, view_guid)
+    categories_map = _create_categories_map(tree[0])
+    props = await model_derivative_client.fetch_all_properties(urn, view_guid)
+    conn = sqlite3.connect(sqlite_db_path)
     c = conn.cursor()
-    c.execute(f"CREATE TABLE properties (object_id INTEGER, name TEXT, external_id TEXT, {", ".join([f'{column_name} {column_type}' for (column_name, column_type, _, _, _) in PROPERTIES])})")
+    db_schema = get_property_db_schema()
+    c.execute(db_schema)
     for row in props:
         object_id = row["objectid"]
         name = row["name"]
         external_id = row["externalId"]
+        category = categories_map.get(object_id, "")
         object_props = row["properties"]
-        insert_values = [object_id, name, external_id]
+        insert_values = [object_id, name, external_id, category]
         for (_, _, category_name, property_name, parse_func) in PROPERTIES:
             if category_name in object_props and property_name in object_props[category_name]:
                 insert_values.append(parse_func(object_props[category_name][property_name]))
@@ -122,4 +148,17 @@ async def setup(urn: str, access_token: str, cache_urn_dir: str) -> SQLDatabase:
         c.execute(f"INSERT INTO properties VALUES ({', '.join(['?' for _ in insert_values])})", insert_values)
     conn.commit()
     conn.close()
-    return SQLDatabase.from_uri(f"sqlite:///{propdb_path}")
+
+
+def query_property_db(sqlite_query: str, sqlite_db_path: str) -> str:
+    conn = sqlite3.connect(sqlite_db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sqlite_query)
+        rows = cursor.fetchall()
+        result = "\n".join([str(row) for row in rows])
+    except Exception as e:
+        result = f"An error occurred: {e}"
+    finally:
+        conn.close()
+    return result
