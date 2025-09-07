@@ -3,19 +3,20 @@ import logging
 from strands import Agent, tool
 from strands.models import BedrockModel
 from .propdb import save_property_db, query_property_db, get_property_db_schema
+from .memory import memory_id, client, MemoryHookProvider
 
 
 MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 CACHE_FOLDER = "cache"
-logging.basicConfig(level=logging.INFO, filename="agent.log", filemode="a",)
-logger = logging.getLogger("agent")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 with open("instructions.txt", "r") as f:
     SYSTEM_PROMPT = f.read()
 
 
-async def create_design_agent(aps_design_urn: str, aps_access_token: str, messages=[]):
+async def create_design_agent(aps_design_urn: str, user_id: str, aps_access_token: str):
     if not aps_design_urn:
         raise ValueError("APS Design URN is required")
     if not aps_access_token:
@@ -66,28 +67,11 @@ async def create_design_agent(aps_design_urn: str, aps_access_token: str, messag
             logger.error(f"Error fetching property database schema: {e}")
             return f"An error occurred: {e}"
 
-    agent = Agent(
+    return Agent(
+        name="APS Design Agent",
         model=BedrockModel(model_id=MODEL_ID),
-        messages=messages,
+        hooks=[MemoryHookProvider(client, memory_id)],
         tools=[_query_property_db, _get_property_db_schema],
+        state={"actor_id": user_id, "session_id": aps_design_urn},
         system_prompt=SYSTEM_PROMPT,
     )
-
-    return agent
-
-
-if __name__ == "__main__":
-    import asyncio
-    import argparse
-    import json
-
-    async def main():
-        parser = argparse.ArgumentParser()
-        parser.add_argument("payload", type=str)
-        args = parser.parse_args()
-        payload = json.loads(args.payload)
-        agent = await create_design_agent(payload["aps_design_urn"], payload["aps_access_token"])
-        response = agent(payload["prompt"])
-        print(response.message["content"][0]["text"])
-
-    asyncio.run(main())

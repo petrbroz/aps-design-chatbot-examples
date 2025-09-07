@@ -1,6 +1,11 @@
 import asyncio
 import httpx
+import logging
 import sqlite3
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class ModelDerivativesClient:
@@ -123,6 +128,7 @@ def get_property_db_schema() -> str:
 
 
 async def save_property_db(urn: str, access_token: str, sqlite_db_path: str):
+    logger.info(f"Saving property DB to {sqlite_db_path}")
     model_derivative_client = ModelDerivativesClient(access_token)
     views = await model_derivative_client.list_model_views(urn)
     view_guid = views[0]["guid"] # Use the first view
