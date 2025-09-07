@@ -44,6 +44,7 @@ def _parse_length(value):
         "km": 1000,
         "in": 0.0254,
         "ft": 0.3048,
+        "fractional-in": 0.3048,
         "ft-and-fractional-in": 0.3048,
         "yd": 0.9144,
         "mi": 1609.34
