@@ -25,6 +25,8 @@ For any design selected in the frontend, the application extracts its various pr
 
 ### Run
 
-- Run the backend service: `uv run app.py`
-- Serve the web frontend: `python3 -m http.server -d www 8000`
+- Run the AgentCore Runtime locally: `uv run app.py`
+- Serve the static website: `python3 -m http.server -d www 8000`
 - Go to [http://localhost:8000](http://localhost:8000)
+- Login with your Autodesk credentials
+- Select a design file, and start asking questions
