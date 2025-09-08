@@ -4,6 +4,7 @@ from bedrock_agentcore import BedrockAgentCoreApp
 from fastapi.middleware.cors import CORSMiddleware
 from src.agent import create_design_agent
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -28,22 +29,21 @@ async def agent_invocation(payload):
     
     Expected payload structure:
     {
-        "session_id": "optional-session-id",
-        "prompt": "Your design data question",
         "aps_design_urn": "APS design URN",
         "aps_access_token": "APS access token",
+        "prompt": "Your design data question",
     }
 
     Returns:
         Generator: Yields response chunks for streaming
     """
     try:
-        user_message = payload.get("prompt", "No prompt found in input, please guide customer to create a json payload with prompt key")
+        prompt = payload.get("prompt", "No prompt found in input, please guide customer to create a json payload with prompt key")
         aps_design_urn = payload.get("aps_design_urn")
         aps_access_token = payload.get("aps_access_token")
         logger.info("Request received:")
-        logger.info(f"APS Design URN: {aps_design_urn}")
-        logger.info(f"Prompt: {user_message}")
+        logger.info(f"Design URN: {aps_design_urn}")
+        logger.info(f"Prompt: {prompt}")
 
         user_id = None
         if aps_access_token:
@@ -53,8 +53,9 @@ async def agent_invocation(payload):
                 logger.info(f"User ID: {user_id}")
             except Exception as e:
                 logger.error(f"Failed to decode JWT: {e}")
+
         agent = await create_design_agent(aps_design_urn, user_id, aps_access_token)
-        stream = agent.stream_async(user_message)
+        stream = agent.stream_async(prompt)
         async for event in stream:
             if "message" in event and "content" in event["message"] and "role" in event["message"] and event["message"]["role"] == "assistant":
                 for content_item in event["message"]["content"]:

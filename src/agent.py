@@ -7,7 +7,7 @@ from .memory import memory_id, client, MemoryHookProvider
 
 
 MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-CACHE_FOLDER = "cache"
+CACHE_FOLDER = os.getenv("CACHE_FOLDER", "cache")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
