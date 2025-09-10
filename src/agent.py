@@ -3,17 +3,19 @@ import logging
 from strands import Agent, tool
 from strands.models import BedrockModel
 from .propdb import save_property_db, query_property_db, get_property_db_schema
-from .memory import memory_id, client, MemoryHookProvider
+from .memory import MemoryHookProvider
 
 
 MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 CACHE_FOLDER = os.getenv("CACHE_FOLDER", "cache")
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
+MEMORY_ID = os.getenv("MEMORY_ID")
+if not MEMORY_ID:
+    raise ValueError("MEMORY_ID environment variable is not set")
 with open("instructions.txt", "r") as f:
     SYSTEM_PROMPT = f.read()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def create_design_agent(aps_design_urn: str, user_id: str, aps_access_token: str):
@@ -70,7 +72,7 @@ async def create_design_agent(aps_design_urn: str, user_id: str, aps_access_toke
     return Agent(
         name="APS Design Agent",
         model=BedrockModel(model_id=MODEL_ID),
-        hooks=[MemoryHookProvider(client, memory_id)],
+        hooks=[MemoryHookProvider(MEMORY_ID)],
         tools=[_query_property_db, _get_property_db_schema],
         state={"actor_id": user_id, "session_id": aps_design_urn},
         system_prompt=SYSTEM_PROMPT,

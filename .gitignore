@@ -14,3 +14,5 @@ cache/
 .env
 .DS_Store
 Thumbs.db
+
+.bedrock_agentcore.yaml
