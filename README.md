@@ -39,13 +39,15 @@ For any selected design file, the application extracts its various properties us
 
 #### Invoking AgentCore Runtime from command line
 
-1. Go to https://acc.autodesk.com, open one of your design files, and grab a design URN and an access token from the Network tab
-2. Deploy to AgentCore Runtime: `agentcore launch`
-3. Invoke the deployed agent:
+1. Go to https://acc.autodesk.com, open one of your design files, a design URN and an access token from the Network tab, and set them as environment variables:
 
 ```bash
-export APS_DESIGN_URN="dXJuOmFkc2sud2lwcHJvZDpmcy5maWxlOnZmLldYSUJJTC1TUUp5LU5ua3FaVjNuSWc_dmVyc2lvbj0x"
+export APS_DESIGN_URN="dXJuOmFk..."
 export APS_ACCESS_TOKEN="eyJhbGci..."
-export AGENT_PROMPT="What are the top 5 elements with largest volume?"
-agentcore invoke "{\"prompt\":\"$AGENT_PROMPT\", \"aps_design_urn\":\"$APS_DESIGN_URN\",\"aps_access_token\":\"$APS_ACCESS_TOKEN\"}"
+```
+
+2. Invoke the remote agent:
+
+```bash
+agentcore invoke "{\"prompt\":\"What are the top 5 elements with largest volume?\", \"aps_design_urn\":\"$APS_DESIGN_URN\",\"aps_access_token\":\"$APS_ACCESS_TOKEN\"}"
 ```
