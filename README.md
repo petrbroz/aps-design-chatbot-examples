@@ -26,6 +26,8 @@ For any selected design file, the application extracts its various properties us
 - Configure the AgentCore Runtime: `agentcore configure -e app.py`
 - Deploy to AgentCore Runtime: `agentcore launch`
 
+https://github.com/user-attachments/assets/316ce37f-f916-4ffa-8444-1c6653f80d6e
+
 ### Try it out
 
 #### Locally running agent with a simple website
@@ -36,6 +38,8 @@ For any selected design file, the application extracts its various properties us
 4. Go to [http://localhost:8000](http://localhost:8000)
 5. Login with your Autodesk credentials
 6. Select a design file, and start asking questions
+
+https://github.com/user-attachments/assets/1f30ef4d-7b53-4cde-928b-7b2954fccbb8
 
 #### Invoking AgentCore Runtime from command line
 
@@ -51,3 +55,5 @@ export APS_ACCESS_TOKEN="eyJhbGci..."
 ```bash
 agentcore invoke "{\"prompt\":\"What are the top 5 elements with largest volume?\", \"aps_design_urn\":\"$APS_DESIGN_URN\",\"aps_access_token\":\"$APS_ACCESS_TOKEN\"}"
 ```
+
+https://github.com/user-attachments/assets/14ce0fea-4e1d-44d7-b4a4-8e36870932cd
