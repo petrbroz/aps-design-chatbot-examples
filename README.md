@@ -6,7 +6,7 @@ Experimental chatbot for querying design data in [Autodesk Construction Cloud](h
 
 ## How does it work?
 
-For any design selected in the frontend, the application extracts its various properties using the [Model Derivatives API](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/), and caches the data in a local [sqlite](https://www.sqlite.org) database. Then, the application uses a [Strands Agents](https://strandsagents.com/latest) to query the database based on user prompts.
+For any selected design file, the application extracts its various properties using the [Model Derivatives API](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/), and caches them in a local [sqlite](https://www.sqlite.org) database. Then, the application uses a [Strands Agents](https://strandsagents.com/latest) to query the database based on user prompts.
 
 ## Development
 
@@ -14,15 +14,17 @@ For any design selected in the frontend, the application extracts its various pr
 
 - Python 3.13 and [uv](https://github.com/astral-sh/uv)
 - Autodesk Platform Services application (must be of type _Desktop, Mobile, Single-Page App_)
-- Amazon Bedrock AgentCore
+- AWS credentials
+- Access to Amazon Bedrock AgentCore
 
 ### Setup
 
 - Create virtual environment: `uv venv && source .venv/bin/activate`
 - Install dependencies: `uv sync`
-- Configure your AWS credentials
 - Setup AgentCore Memory: `python scripts/create_agentcore_memory.py SomeMemoryName`
-- Set the generated memory ID as an environment variable: `export MEMORY_ID="SomeMemoryName-abcxyz"`
+- Update the `MEMORY_ID` in [src/config.py](src/config.py) with the newly created memory ID
+- Configure the AgentCore Runtime: `agentcore configure -e app.py`
+- Deploy to AgentCore Runtime: `agentcore launch`
 
 ### Try it out
 
@@ -37,14 +39,13 @@ For any design selected in the frontend, the application extracts its various pr
 
 #### Invoking AgentCore Runtime from command line
 
-1. Configure the AgentCore Runtime: `agentcore configure -e app.py`
+1. Go to https://acc.autodesk.com, open one of your design files, and grab a design URN and an access token from the Network tab
 2. Deploy to AgentCore Runtime: `agentcore launch`
-3. Go to https://acc.autodesk.com, open one of your design files, and grab a design URN and an access token from the Network tab
-4. Invoke the deployed agent:
+3. Invoke the deployed agent:
 
 ```bash
 export APS_DESIGN_URN="dXJuOmFkc2sud2lwcHJvZDpmcy5maWxlOnZmLldYSUJJTC1TUUp5LU5ua3FaVjNuSWc_dmVyc2lvbj0x"
 export APS_ACCESS_TOKEN="eyJhbGci..."
-export PROMPT="What are the top 5 elements with largest volume?"
-agentcore invoke "{\"prompt\":\"$PROMPT\", \"aps_design_urn\":\"$APS_DESIGN_URN\",\"aps_access_token\":\"$APS_ACCESS_TOKEN\"}"
+export AGENT_PROMPT="What are the top 5 elements with largest volume?"
+agentcore invoke "{\"prompt\":\"$AGENT_PROMPT\", \"aps_design_urn\":\"$APS_DESIGN_URN\",\"aps_access_token\":\"$APS_ACCESS_TOKEN\"}"
 ```

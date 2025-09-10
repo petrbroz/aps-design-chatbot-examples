@@ -4,15 +4,8 @@ from strands import Agent, tool
 from strands.models import BedrockModel
 from .propdb import save_property_db, query_property_db, get_property_db_schema
 from .memory import MemoryHookProvider
+from .config import MODEL_ID, MEMORY_ID, CACHE_FOLDER, SYSTEM_PROMPT
 
-
-MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-CACHE_FOLDER = os.getenv("CACHE_FOLDER", "cache")
-MEMORY_ID = os.getenv("MEMORY_ID")
-if not MEMORY_ID:
-    raise ValueError("MEMORY_ID environment variable is not set")
-with open("instructions.txt", "r") as f:
-    SYSTEM_PROMPT = f.read()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

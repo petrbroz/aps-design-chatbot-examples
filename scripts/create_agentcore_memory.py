@@ -30,5 +30,4 @@ if __name__ == "__main__":
         sys.exit(1)
     memory_name = sys.argv[1]
     memory_id = create_agentcore_memory(memory_name)
-    print("AgentCore Memory ready. Set the following environment variable:")
-    print(f"MEMORY_ID={memory_id}")
+    print(f"AgentCore Memory ID: {memory_id}")
