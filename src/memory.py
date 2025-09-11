@@ -1,10 +1,5 @@
-import logging
 from strands.hooks import AgentInitializedEvent, HookProvider, HookRegistry, MessageAddedEvent
 from bedrock_agentcore.memory import MemoryClient
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class MemoryHookProvider(HookProvider):
@@ -20,7 +15,7 @@ class MemoryHookProvider(HookProvider):
             session_id = event.agent.state.get("session_id")
 
             if not actor_id or not session_id:
-                logger.warning("Missing actor_id or session_id in agent state")
+                print("Missing actor_id or session_id in agent state")
                 return
 
             # Load the last 16 conversation turns from memory
@@ -42,10 +37,10 @@ class MemoryHookProvider(HookProvider):
                 context = "\n".join(context_messages)
                 # Add context to agent's system prompt.
                 event.agent.system_prompt += f"\n\nRecent conversation:\n{context}"
-                logger.info(f"Loaded {len(recent_turns)} conversation turns")
+                print(f"Loaded {len(recent_turns)} conversation turns")
 
         except Exception as e:
-            logger.error(f"Memory load error: {e}")
+            print(f"Memory load error: {e}")
 
     def on_message_added(self, event: MessageAddedEvent):
         """Store messages in memory"""
@@ -63,7 +58,7 @@ class MemoryHookProvider(HookProvider):
                     messages=[(messages[-1]["content"][0]["text"], messages[-1]["role"])]
                 )
         except Exception as e:
-            logger.error(f"Memory save error: {e}")
+            print(f"Memory save error: {e}")
 
     def register_hooks(self, registry: HookRegistry):
         # Register memory hooks
