@@ -1,21 +1,31 @@
+import logging
 from strands.hooks import AgentInitializedEvent, HookProvider, HookRegistry, MessageAddedEvent
 from bedrock_agentcore.memory import MemoryClient
 
 
+logger = logging.getLogger(__name__)
+
+
 class MemoryHookProvider(HookProvider):
+    """
+    Hook provider to integrate memory functionality into the agent.
+    Loads recent conversation history on agent initialization and stores new messages.
+    """
+
     def __init__(self, memory_id: str):
         self.memory_client = MemoryClient()
         self.memory_id = memory_id
 
     def on_agent_initialized(self, event: AgentInitializedEvent):
         """Load recent conversation history when agent starts"""
+        logger.info("Loading recent conversation history from memory")
         try:
             # Get session info from agent state
             actor_id = event.agent.state.get("actor_id")
             session_id = event.agent.state.get("session_id")
 
             if not actor_id or not session_id:
-                print("Missing actor_id or session_id in agent state")
+                logger.error("Missing actor_id or session_id in agent state")
                 return
 
             # Load the last 16 conversation turns from memory
@@ -37,14 +47,15 @@ class MemoryHookProvider(HookProvider):
                 context = "\n".join(context_messages)
                 # Add context to agent's system prompt.
                 event.agent.system_prompt += f"\n\nRecent conversation:\n{context}"
-                print(f"Loaded {len(recent_turns)} conversation turns")
+                logger.info(f"Loaded {len(recent_turns)} conversation turns")
 
         except Exception as e:
-            print(f"Memory load error: {e}")
+            logger.error(f"Memory load error: {e}")
 
     def on_message_added(self, event: MessageAddedEvent):
         """Store messages in memory"""
         messages = event.agent.messages
+        logger.info(f"Storing message to memory: {messages[-1]}")
         try:
             # Get session info from agent state
             actor_id = event.agent.state.get("actor_id")
@@ -58,7 +69,7 @@ class MemoryHookProvider(HookProvider):
                     messages=[(messages[-1]["content"][0]["text"], messages[-1]["role"])]
                 )
         except Exception as e:
-            print(f"Memory save error: {e}")
+            logger.error(f"Memory save error: {e}")
 
     def register_hooks(self, registry: HookRegistry):
         # Register memory hooks
