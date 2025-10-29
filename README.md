@@ -1,3 +1,14 @@
+> IMPORTANT: this project has been moved to https://github.com/autodesk-platform-services/aps-design-chatbot-examples.
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
 # APS Design Chatbots
 
 This repository contains several experimental chatbot applications designed to interact with design data hosted in [Autodesk Construction Cloud](https://construction.autodesk.com/) (ACC). Each chatbot leverages [Autodesk Platform Services](https://aps.autodesk.com/) (APS) and custom [LangChain](https://www.langchain.com/) agents to provide advanced querying and data analytics capabilities.
